@@ -1,0 +1,109 @@
+1 – Obiettivo del sistema
+Costruire una pagina web full‑screen con chat “Amalfi Coast Bot”, alimentata da un LLM interrogato tramite le API di OpenRouter. L’interfaccia deve essere ultraleggera, mobile‑first, caricamento rapidissimo, design minimale ma contemporaneo.
+
+2 – Variabili d’ambiente (.env)
+
+Chiave	Significato
+OPENROUTER_API_KEY	Chiave privata delle API OpenRouter
+OPENROUTER_MODEL_ID	ID del modello da usare (default: meta-llama/llama-4-maverick:free)
+3 – Struttura minima dei file
+
+File	Contenuto
+index (pagina principale)	Mark‑up di tutta l’app (header, area chat, input).
+instructions	Istruzioni per il LLM, in formato testuale strutturato (vedi § 7).
+source_sites	Elenco di URL preferenziali da cui attingere dati (uno per riga).
+4 – Layout & UX (mobile first)
+Header fisso (altezza minima):
+
+Sinistra → testo “marinadalbori” (font Open Sans, peso 500).
+
+Destra → icona “reset chat”; tocco apre dialog di conferma «Vuoi davvero ricominciare?».
+
+Area messaggi (flex‑verticale, scroll):
+
+Bolla utente.
+
+Bolla bot.
+
+Sotto ogni bolla del bot, in corposo più piccolo e colore attenuato, la scritta “Amalfi Coast Bot”.
+
+Dopo la risposta testuale il bot può visualizzare pulsanti che aprono link esterni (vedi § 6).
+
+Input utente fissato in basso, larghezza 100 %, con invio rapido; sempre visibile anche su tastiera aperta.
+
+5 – Logica di sessione / riavvio
+Ogni reset distrugge lo stato conversazionale e ricrea un nuovo oggetto chat.
+
+Prima della distruzione mostra la dialog di conferma.
+
+6 – Funzioni del bot
+
+Funzione	Requisito
+Conversazione multilingue	Individuare la lingua del messaggio utente e rispondere esclusivamente in quella stessa lingua.
+Ricerca sul Web	Implementare una routine asincrona che: 1) tenta prima i siti elencati in source_sites; 2) se nessuno è rilevante, espande la ricerca liberamente.
+Citazione della fonte	Se la risposta utilizza un sito, aggiungere un pulsante “Apri sito” che punta a quell’URL.
+Velocità	Rendere le chiamate all’LLM e alle ricerche non bloccanti sull’interfaccia.
+7 – File instructions (esempio di struttura)
+Formato raccomandato: titoli in MAIUSCOLO, punti elenco concisi.
+L’agente caricherà l’intero file come system prompt.
+
+markdown
+Copia
+Modifica
+### CONTESTO
+- Sei “Amalfi Coast Bot”, assistente turistico per la Costiera Amalfitana.
+- Tono cordiale, professionale, puntuale.
+
+### MULTILINGUA
+- Rileva la lingua del messaggio utente.
+- Rispondi SOLTANTO in quella lingua, senza eccezioni.
+
+### LINEE GUIDA RISPOSTE
+- Testo brevi paragrafi, massimo due link esterni.
+- Dopo ogni output mostra la stringa "Amalfi Coast Bot" (small, faint).
+
+### RICERCA WEB
+- Consulta prima i siti in `source_sites`.
+- Se trovi l’informazione adeguata, citala e aggiungi un pulsante che apre l’URL usato.
+- Se nulla di utile, espandi la ricerca in rete.
+
+### PRIORITÀ SITI
+1. traghettiamalfi.it → orari traghetti.
+2. museibeniamalfi.com → biglietti musei.
+3. visitcostiera.it → eventi locali.
+
+### ESEMPI DI USO FONTI
+- *“Per gli orari aggiornati dei traghetti ho consultato traghettiamalfi.it.”* (pulsante: **«Vedi orari»** → link sito).
+- *“Biglietti e fasce orarie del Duomo di Amalfi reperiti su museibeniamalfi.com.”* (pulsante: **«Acquista»**).
+
+### BUONE PRATICHE
+- Mantieni brevi le introduzioni, vai dritto all’informazione.
+- Usa sempre la formattazione plain‑text; evita markdown complesso.
+- Se la risposta richiede stime di prezzo, specifica che sono “indicative”.
+8 – Flusso di richiesta / risposta
+Frontend invia testo al backend.
+
+Backend costruisce payload →
+
+json
+Copia
+Modifica
+{
+  "model": "<OPENROUTER_MODEL_ID>",
+  "messages": [
+    {"role":"system","content": <contenuto instructions>},
+    {"role":"user","content": <messaggio utente>}
+  ]
+}
+Backend inoltra a https://openrouter.ai/api/v1/chat/completions con header Authorization: Bearer <OPENROUTER_API_KEY>.
+
+Restituisce lo stream di token alla UI.
+
+Se la risposta include link, renderizza i pulsanti immediatamente sotto la bolla del bot.
+
+9 – Prestazioni & accessibilità
+Tutte le risorse sotto 100 KB dove possibile.
+
+Contrast ratio ≥ 4.5 per testi principali.
+
+Focus state visibile su elementi interattivi.

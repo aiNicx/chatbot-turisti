@@ -7,7 +7,7 @@ interface LinkType {
  * Simple language detection based on common words and patterns
  * This is a simplified approach - a production app would use a language detection library
  */
-function detectLanguage(text: string): string {
+export function detectLanguage(text: string): string {
   const textLower = text.toLowerCase();
   
   // Check for Italian indicators

@@ -5,6 +5,32 @@ interface ChatMessageProps {
   message: MessageType;
 }
 
+/**
+ * Clean message content by removing any HTML tags or formatting artifacts
+ */
+const cleanMessageContent = (content: string): string => {
+  // First, remove any "Amalfi Coast Bot" references since we add it manually
+  let cleaned = content.replace(/Amalfi Coast Bot$/, '').trim();
+  
+  // Remove any HTML tags that might be present
+  cleaned = cleaned.replace(/<[^>]*>|<\/[^>]*>/g, '');
+  
+  // Remove any markdown-style links
+  cleaned = cleaned.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
+  
+  // Remove any URL references or button syntax
+  cleaned = cleaned.replace(/\((?:button|pulsante):\s*«([^»]+)»\s*→\s*([^)]+)\)/g, '');
+  cleaned = cleaned.replace(/https?:\/\/[^\s]+/g, '');
+  
+  // Remove text inside parentheses containing URLs
+  cleaned = cleaned.replace(/\((?:[^)]*?https?:\/\/[^)]*?)\)/g, '');
+  
+  // Clean up any double spaces or excessive whitespace
+  cleaned = cleaned.replace(/\s{2,}/g, ' ');
+  
+  return cleaned.trim();
+};
+
 const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const { role, content, links } = message;
   
@@ -15,18 +41,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       </div>
     );
   } else {
-    // Extract and remove any HTML tags or spans with "Amalfi Coast Bot"
-    let displayContent = content;
-    const botSignatureRegex = /Amalfi Coast Bot$|<span[^>]*>Amalfi Coast Bot<\/span>$/;
-    displayContent = displayContent.replace(botSignatureRegex, '').trim();
-    
-    // Remove any embedded HTML styling for the bot signature
-    const htmlSpanRegex = /<span\s+style="[^"]*">\s*Amalfi\s+Coast\s+Bot\s*<\/span>/g;
-    displayContent = displayContent.replace(htmlSpanRegex, '').trim();
-    
-    // Also remove any text in parentheses that seems to be describing buttons
-    const buttonTextRegex = /\((?:button|pulsante): «([^»]+)» → ([^)]+)\)/g;
-    displayContent = displayContent.replace(buttonTextRegex, '').trim();
+    // Process the content to ensure it's clean of any HTML or formatting artifacts
+    const displayContent = cleanMessageContent(content);
     
     return (
       <div className="flex flex-col max-w-[85%] sm:max-w-[75%] rounded-lg p-4 bg-botBg self-start mb-4 shadow-sm">

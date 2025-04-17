@@ -24,7 +24,7 @@ function sanitizeText(text: string): string {
   // Remove any instances of HTML href elements
   cleanedText = cleanedText.replace(/<a href=["|']([^"']+)["|']>([^<]+)<\/a>/g, '$2');
   
-  // Remove any parentheses with URLs inside
+  // Remove any parentheses with URLs inside, ma preserva le menzioni delle compagnie
   cleanedText = cleanedText.replace(/\(https?:\/\/[^\s)]+\)/g, '');
   
   // Remove any "Amalfi Coast Bot" tag that might be formatted with markdown or HTML
@@ -33,21 +33,30 @@ function sanitizeText(text: string): string {
   
   // Remove any button descriptions with URL syntax
   cleanedText = cleanedText.replace(/\((?:button|pulsante):\s*«([^»]+)»\s*→\s*([^)]+)\)/g, '');
+  cleanedText = cleanedText.replace(/\((?:pulsante|button):\s*([^)]+)\)/g, '');
   
-  // Remove text inside parentheses that contains URL
-  cleanedText = cleanedText.replace(/\((?:[^)]*?https?:\/\/[^)]*?)\)/g, '');
+  // Preservare le menzioni delle compagnie di traghetti
+  const preserveCompanies = (match: string, p1: string): string => {
+    const companyNames = ['Travelmar', 'Alicost', 'Traghettilines'];
+    for (const company of companyNames) {
+      if (p1.includes(company)) return company;
+    }
+    return '';
+  };
+  cleanedText = cleanedText.replace(/\((?:[^)]*?(Travelmar|Alicost|Traghettilines)[^)]*?)\)/g, preserveCompanies);
   
-  // Clean up any artifacts from costieraamalfitana.com mentions
-  cleanedText = cleanedText.replace(/costieraamalfitana\.com\]\(https:\/\/www\.costieraamalfitana\.com\)/g, '');
+  // Clean up any artifacts from costieraamalfitana.com mentions but preserve the name
+  cleanedText = cleanedText.replace(/costieraamalfitana\.com\]\(https:\/\/www\.costieraamalfitana\.com\)/g, 'costieraamalfitana.com');
   
-  // Remove any direct URLs
-  cleanedText = cleanedText.replace(/https?:\/\/[^\s]+/g, '');
+  // Remove any direct URLs but preserve main domain references
+  cleanedText = cleanedText.replace(/https?:\/\/(?:www\.)?([^\/\s]+)\.[^\/\s]+(?:\/[^\s]*)?/g, '$1');
   
-  // Clean up multiple spaces and line breaks
-  cleanedText = cleanedText.replace(/\s+/g, ' ');
+  // Clean up multiple spaces and line breaks (ma preserva i paragrafi)
+  cleanedText = cleanedText.replace(/\n{3,}/g, '\n\n'); // reduce excessive line breaks
+  cleanedText = cleanedText.replace(/[ \t]{2,}/g, ' '); // reduce multiple spaces
   
   // Add "Amalfi Coast Bot" signature at the end (this will be handled by the UI)
-  if (!cleanedText.endsWith('Amalfi Coast Bot')) {
+  if (!cleanedText.includes('Amalfi Coast Bot')) {
     cleanedText = cleanedText.trim() + '\n\nAmalfi Coast Bot';
   }
   

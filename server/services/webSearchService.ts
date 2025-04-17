@@ -158,13 +158,62 @@ function getGenericButtonText(language: string): string {
 export function extractLinksFromText(text: string, sourceSites: string[]): LinkType[] {
   const links: LinkType[] = [];
   
-  // Remove any URL button syntax from the original message so they don't appear in the text
-  // This prevents text like: "(button: «text» → URL)" from showing in the message
-  const cleanedText = text.replace(/\((?:button|pulsante): «([^»]+)» → ([^)]+)\)/g, '');
-  
   // Get language from text to provide correct button labels
-  // This is a very simple approach - production system would use a language detection library
-  const language = detectLanguage(cleanedText);
+  const language = detectLanguage(text);
+  
+  // Rilevare il tema principale del messaggio
+  const textLower = text.toLowerCase();
+  
+  // Rilevamento traghetti e barche
+  const containsTraghetti = 
+    textLower.includes('traghett') || 
+    textLower.includes('ferry') || 
+    textLower.includes('ferr') || 
+    textLower.includes('boat') || 
+    textLower.includes('паром') ||
+    textLower.includes('渡船');
+  
+  // Rilevamento attività, cosa fare, percorsi
+  const containsAttivita = 
+    textLower.includes('attività') || 
+    textLower.includes('activities') || 
+    textLower.includes('sentiero') || 
+    textLower.includes('path') || 
+    textLower.includes('what to do') || 
+    textLower.includes('cosa fare') || 
+    textLower.includes('spiaggia') || 
+    textLower.includes('beach');
+  
+  // CASO 1: Fornire link ai traghetti
+  if (containsTraghetti) {
+    // Aggiungi automaticamente link alle compagnie di traghetti più importanti
+    const ferryCompanies = [
+      { name: "Travelmar", url: "https://www.travelmar.it/" },
+      { name: "Alicost", url: "https://www.alicost.it/" }
+    ];
+    
+    // Aggiungi entrambe le compagnie
+    for (const company of ferryCompanies) {
+      links.push({
+        text: getCompanyButtonText(company.name, language),
+        url: company.url
+      });
+    }
+    
+    return links;
+  }
+  
+  // CASO 2: Fornire link alle attività
+  if (containsAttivita) {
+    links.push({
+      text: getActivityButtonText(language),
+      url: "https://www.costieraamalfitana.com/"
+    });
+    
+    return links;
+  }
+  
+  // Continua con la logica normale se non si parla di traghetti
   
   // Check if any source site is mentioned in the text
   const mentionedSites: {site: string, cleanSite: string, url: string}[] = [];
@@ -173,8 +222,9 @@ export function extractLinksFromText(text: string, sourceSites: string[]): LinkT
     // Clean the site URL from http/https prefix for comparison
     const cleanSite = site.replace(/^https?:\/\//, '').replace(/^www\./, '');
     
-    // Check if site is mentioned in the text
-    if (cleanedText.toLowerCase().includes(cleanSite.toLowerCase())) {
+    // Simplified check: just see if any domain keywords are present
+    const domainKeywords = cleanSite.split('.')[0];
+    if (textLower.includes(domainKeywords.toLowerCase())) {
       // Ensure the URL has http/https prefix
       let url = site;
       if (!url.startsWith('http')) {

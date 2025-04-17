@@ -15,10 +15,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       </div>
     );
   } else {
-    // Extract and remove the "Amalfi Coast Bot" signature if it appears at the end of the message
+    // Extract and remove any HTML tags or spans with "Amalfi Coast Bot"
     let displayContent = content;
-    const botSignatureRegex = /Amalfi Coast Bot$/;
+    const botSignatureRegex = /Amalfi Coast Bot$|<span[^>]*>Amalfi Coast Bot<\/span>$/;
     displayContent = displayContent.replace(botSignatureRegex, '').trim();
+    
+    // Remove any embedded HTML styling for the bot signature
+    const htmlSpanRegex = /<span\s+style="[^"]*">\s*Amalfi\s+Coast\s+Bot\s*<\/span>/g;
+    displayContent = displayContent.replace(htmlSpanRegex, '').trim();
     
     // Also remove any text in parentheses that seems to be describing buttons
     const buttonTextRegex = /\((?:button|pulsante): «([^»]+)» → ([^)]+)\)/g;

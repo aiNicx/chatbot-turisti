@@ -61,9 +61,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSubmit, inputRef }) => {
             viewBox="0 0 24 24" 
             fill="currentColor" 
             className="w-7 h-7"
-            style={{ transform: "rotate(45deg)" }}
+            style={{ 
+              filter: "drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.2))"
+            }}
           >
-            <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+            <path d="M5.25 2.25a3 3 0 00-3 3v13.5a3 3 0 003 3h13.5a3 3 0 003-3V5.25a3 3 0 00-3-3H5.25zm9.78 13.97a.75.75 0 001.06 0l3.75-3.75a.75.75 0 000-1.06l-3.75-3.75a.75.75 0 00-1.06 1.06l2.47 2.47H5.25a.75.75 0 000 1.5h12.25l-2.47 2.47a.75.75 0 000 1.06z" />
           </svg>
         </button>
       </form>

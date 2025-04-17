@@ -65,7 +65,13 @@ function sanitizeText(text: string): string {
 
 export async function sendMessageToLLM(
   chatHistory: Array<{ role: string; content: string }>,
-  sourceSites: string[]
+  sourceSites: string[],
+  conversationContext?: {
+    topicsDiscussed?: Set<string>;
+    linksProvided?: Map<string, number>;
+    lastMessageHadLinks?: boolean;
+    messageCount?: number;
+  }
 ): Promise<LLMResponse | null> {
   try {
     // Get API key and model from environment
@@ -97,8 +103,8 @@ export async function sendMessageToLLM(
       // Thoroughly sanitize the text to remove any unwanted HTML or formatting
       const sanitizedMessage = sanitizeText(rawMessage);
       
-      // Extract possible links from the text
-      const links = extractLinksFromText(sanitizedMessage, sourceSites);
+      // Extract possible links from the text and use conversation context
+      const links = extractLinksFromText(sanitizedMessage, sourceSites, conversationContext);
       
       return {
         content: sanitizedMessage,

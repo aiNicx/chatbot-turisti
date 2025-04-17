@@ -5,10 +5,26 @@ import { sendMessageToLLM } from "./services/openRouterService";
 import { readFileSync } from "fs";
 import path from "path";
 
+// Interfaccia per tenere traccia del contesto della conversazione
+interface ConversationContext {
+  topicsDiscussed: Set<string>;        // Argomenti già discussi
+  linksProvided: Map<string, number>;  // Link già forniti e quante volte
+  lastMessageHadLinks: boolean;        // Indica se l'ultimo messaggio aveva link
+  messageCount: number;                // Conteggio dei messaggi nella conversazione corrente
+}
+
 // Global chat state - in a real app, this would be per user and stored in a database
 let chatHistory: Array<{ role: string; content: string }> = [];
 let instructions: string;
 let sourceSites: string[];
+
+// Inizializza il contesto della conversazione
+const conversationContext: ConversationContext = {
+  topicsDiscussed: new Set<string>(),
+  linksProvided: new Map<string, number>(),
+  lastMessageHadLinks: false,
+  messageCount: 0
+};
 
 try {
   // Load instructions and source sites from files
@@ -19,6 +35,45 @@ try {
   console.error("Error loading instructions or source sites:", error);
   instructions = "You are Amalfi Coast Bot, an assistant for the Amalfi Coast region.";
   sourceSites = ["traghettiamalfi.it", "museibeniamalfi.com", "visitcostiera.it"];
+}
+
+// Funzione per aggiornare il contesto della conversazione
+function updateConversationContext(message: string, links?: { text: string, url: string }[]) {
+  // Incrementa il conteggio dei messaggi
+  conversationContext.messageCount++;
+  
+  // Rileva i temi principali del messaggio
+  const lowerMsg = message.toLowerCase();
+  
+  // Traccia gli argomenti discussi
+  if (lowerMsg.includes('traghett') || lowerMsg.includes('ferry') || lowerMsg.includes('boat') || 
+      lowerMsg.includes('ferr') || lowerMsg.includes('nave')) {
+    conversationContext.topicsDiscussed.add('ferry');
+  }
+  
+  if (lowerMsg.includes('attività') || lowerMsg.includes('activities') || 
+      lowerMsg.includes('what to do') || lowerMsg.includes('cosa fare') || 
+      lowerMsg.includes('visit') || lowerMsg.includes('vedere')) {
+    conversationContext.topicsDiscussed.add('activities');
+  }
+  
+  if (lowerMsg.includes('spiaggia') || lowerMsg.includes('beach') || 
+      lowerMsg.includes('mare') || lowerMsg.includes('sea')) {
+    conversationContext.topicsDiscussed.add('beach');
+  }
+  
+  // Traccia i link forniti in questo messaggio
+  if (links && links.length > 0) {
+    conversationContext.lastMessageHadLinks = true;
+    
+    links.forEach(link => {
+      const domain = new URL(link.url).hostname.replace('www.', '');
+      const currentCount = conversationContext.linksProvided.get(domain) || 0;
+      conversationContext.linksProvided.set(domain, currentCount + 1);
+    });
+  } else {
+    conversationContext.lastMessageHadLinks = false;
+  }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -35,16 +90,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!message || typeof message !== "string") {
         return res.status(400).json({ message: "Invalid message format" });
       }
+      
+      // Aggiorna il contesto con il messaggio dell'utente
+      updateConversationContext(message);
 
       // Add user message to history
       chatHistory.push({ role: "user", content: message });
 
-      // Send to LLM and get response
-      const result = await sendMessageToLLM(chatHistory, sourceSites);
+      // Send to LLM and get response with context
+      const result = await sendMessageToLLM(chatHistory, sourceSites, conversationContext);
 
       if (result) {
         // Add assistant message to history
         chatHistory.push({ role: "assistant", content: result.content });
+        
+        // Aggiorna il contesto con la risposta e i link
+        updateConversationContext(result.content, result.links);
+        
+        console.log(`Topics discussed: ${Array.from(conversationContext.topicsDiscussed).join(', ')}`);
+        console.log(`Links provided: ${Array.from(conversationContext.linksProvided.entries()).map(([k, v]) => `${k}(${v})`).join(', ')}`);
         
         // Return the response
         return res.status(200).json({
@@ -67,6 +131,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       chatHistory = [
         { role: "system", content: instructions }
       ];
+      
+      // Reset conversation context
+      conversationContext.topicsDiscussed.clear();
+      conversationContext.linksProvided.clear();
+      conversationContext.lastMessageHadLinks = false;
+      conversationContext.messageCount = 0;
       
       return res.status(200).json({ message: "Chat reset successfully" });
     } catch (error) {

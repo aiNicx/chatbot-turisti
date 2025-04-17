@@ -155,7 +155,16 @@ function getGenericButtonText(language: string): string {
  * This is a simplified implementation - in a production app, 
  * we would do actual web searches to find relevant content
  */
-export function extractLinksFromText(text: string, sourceSites: string[]): LinkType[] {
+export function extractLinksFromText(
+  text: string, 
+  sourceSites: string[],
+  conversationContext?: {
+    topicsDiscussed?: Set<string>;
+    linksProvided?: Map<string, number>;
+    lastMessageHadLinks?: boolean;
+    messageCount?: number;
+  }
+): LinkType[] {
   const links: LinkType[] = [];
   
   // Get language from text to provide correct button labels
@@ -184,8 +193,21 @@ export function extractLinksFromText(text: string, sourceSites: string[]): LinkT
     textLower.includes('spiaggia') || 
     textLower.includes('beach');
   
-  // CASO 1: Fornire link ai traghetti
-  if (containsTraghetti) {
+  // Verifichiamo se esistono già link alle compagnie di traghetti
+  const ferryLinksAlreadyProvided = conversationContext?.linksProvided?.has('travelmar.it') || 
+                                  conversationContext?.linksProvided?.has('alicost.it');
+  
+  // Verifichiamo se esiste già un link alle attività
+  const activityLinksAlreadyProvided = conversationContext?.linksProvided?.has('costieraamalfitana.com');
+  
+  // Verifichiamo se l'ultimo messaggio aveva già link
+  const lastMessageHadLinks = conversationContext?.lastMessageHadLinks || false;
+  
+  // CASO 1: Fornire link ai traghetti solo se sono rilevanti nel contesto attuale
+  // e non sono stati forniti in precedenza nella conversazione
+  if (containsTraghetti && !ferryLinksAlreadyProvided) {
+    console.log("Fornisco link ai traghetti (non forniti in precedenza)");
+    
     // Aggiungi automaticamente link alle compagnie di traghetti più importanti
     const ferryCompanies = [
       { name: "Travelmar", url: "https://www.travelmar.it/" },
@@ -203,14 +225,28 @@ export function extractLinksFromText(text: string, sourceSites: string[]): LinkT
     return links;
   }
   
-  // CASO 2: Fornire link alle attività
-  if (containsAttivita) {
+  // CASO 2: Fornire link alle attività solo se sono rilevanti nel contesto attuale
+  // e non sono stati forniti in precedenza
+  if (containsAttivita && !activityLinksAlreadyProvided) {
+    console.log("Fornisco link alle attività (non fornito in precedenza)");
+    
     links.push({
       text: getActivityButtonText(language),
       url: "https://www.costieraamalfitana.com/"
     });
     
     return links;
+  }
+  
+  // Se l'ultimo messaggio aveva già dei link, evitiamo di aggiungerne altri 
+  // a meno che non siano esplicitamente richiesti nel testo
+  if (lastMessageHadLinks && !(
+      textLower.includes("link") || 
+      textLower.includes("sito") || 
+      textLower.includes("website") || 
+      textLower.includes("più informazioni"))) {
+    console.log("L'ultimo messaggio aveva già dei link, non ne aggiungo altri");
+    return [];
   }
   
   // Continua con la logica normale se non si parla di traghetti

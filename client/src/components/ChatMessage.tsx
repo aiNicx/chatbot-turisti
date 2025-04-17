@@ -21,7 +21,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
     displayContent = displayContent.replace(botSignatureRegex, '').trim();
     
     // Also remove any text in parentheses that seems to be describing buttons
-    const buttonTextRegex = /\(pulsante: «([^»]+)» → ([^)]+)\)/g;
+    const buttonTextRegex = /\((?:button|pulsante): «([^»]+)» → ([^)]+)\)/g;
     displayContent = displayContent.replace(buttonTextRegex, '').trim();
     
     return (
@@ -37,7 +37,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
                 href={link.url} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="inline-block px-4 py-2 text-xs font-medium text-white bg-primary rounded-md hover:bg-blue-600 transition-colors shadow-md border border-blue-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="inline-block px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors shadow-md border border-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               >
                 {link.text}
               </a>

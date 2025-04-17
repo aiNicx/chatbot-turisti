@@ -11,23 +11,35 @@ interface LinkType {
 export function extractLinksFromText(text: string, sourceSites: string[]): LinkType[] {
   const links: LinkType[] = [];
   
+  // Remove any URL button syntax from the original message so they don't appear in the text
+  // This prevents text like: "(button: «text» → URL)" from showing in the message
+  const cleanedText = text.replace(/\((?:button|pulsante): «([^»]+)» → ([^)]+)\)/g, '');
+  
   // Check if any source site is mentioned in the text
   for (const site of sourceSites) {
-    if (text.toLowerCase().includes(site.toLowerCase())) {
-      // Different button text based on the site
-      let buttonText = "Vedi sito";
+    // Clean the site URL from http/https prefix for comparison
+    const cleanSite = site.replace(/^https?:\/\//, '').replace(/^www\./, '');
+    
+    // Check if site is mentioned in the text
+    if (cleanedText.toLowerCase().includes(cleanSite.toLowerCase())) {
+      // Different button text based on the site domain
+      let buttonText = "Maggiori informazioni";
       
-      if (site.includes("traghetti")) {
-        buttonText = "Vedi orari";
-      } else if (site.includes("musei")) {
-        buttonText = "Acquista";
-      } else if (site.includes("costiera")) {
-        buttonText = "Esplora";
+      if (cleanSite.includes("traghettilines") || cleanSite.includes("travelmar") || cleanSite.includes("alicost")) {
+        buttonText = "Orari traghetti";
+      } else if (cleanSite.includes("costieraamalfitana")) {
+        buttonText = "Esplora attività";
+      }
+      
+      // Ensure the URL has http/https prefix
+      let url = site;
+      if (!url.startsWith('http')) {
+        url = `https://${url}`;
       }
       
       links.push({
         text: buttonText,
-        url: `https://${site}`
+        url
       });
       
       // Limit to max 2 links per response

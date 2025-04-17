@@ -50,7 +50,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSubmit, inputRef }) => {
         />
         <button
           type="submit"
-          className={`flex items-center justify-center w-12 h-12 bg-primary text-white rounded-full hover:bg-blue-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 shadow-md ${
+          className={`flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 shadow-lg border border-blue-700 ${
             isLoading || !inputValue.trim() ? "opacity-70 cursor-not-allowed" : ""
           }`}
           aria-label="Send message"
@@ -60,7 +60,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSubmit, inputRef }) => {
             xmlns="http://www.w3.org/2000/svg" 
             viewBox="0 0 24 24" 
             fill="currentColor" 
-            className="w-6 h-6"
+            className="w-7 h-7"
             style={{ transform: "rotate(45deg)" }}
           >
             <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />

@@ -102,36 +102,88 @@ export const ChatContextProvider: React.FC<ChatContextProviderProps> = ({ childr
     const style = document.createElement('style');
     style.textContent = `
       :root {
-        --primary: #1a73e8;
-        --botBg: #f3f4f6;
-        --userBg: #e8f0fe;
-        --textMain: #333333;
-        --textSecondary: #6b7280;
-        --borderColor: #e5e7eb;
+        --primary: #1e88e5;
+        --botBg: #f8f9fa;
+        --userBg: #e3f2fd;
+        --textMain: #2d3748;
+        --textSecondary: #64748b;
+        --borderColor: #e2e8f0;
       }
       
       body {
-        font-family: 'Open Sans', sans-serif;
+        font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         -webkit-font-smoothing: antialiased;
         height: 100vh;
         overflow: hidden;
+        background-color: #ffffff;
+        color: var(--textMain);
       }
       
+      /* Animazioni per nuovi messaggi */
+      .flex-col > div {
+        animation: slideIn 0.3s ease forwards;
+        transform: translateY(10px);
+        opacity: 0;
+      }
+      
+      @keyframes slideIn {
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      
+      /* Personalizzazione scrollbar */
       .chat-area::-webkit-scrollbar {
         width: 6px;
       }
       
       .chat-area::-webkit-scrollbar-track {
-        background: #f1f1f1;
-      }
-      
-      .chat-area::-webkit-scrollbar-thumb {
-        background: #cfcfcf;
+        background: rgba(241, 241, 241, 0.5);
         border-radius: 6px;
       }
       
+      .chat-area::-webkit-scrollbar-thumb {
+        background: rgba(180, 180, 180, 0.5);
+        border-radius: 6px;
+        transition: background 0.2s ease;
+      }
+      
       .chat-area::-webkit-scrollbar-thumb:hover {
-        background: #b3b3b3;
+        background: rgba(150, 150, 150, 0.8);
+      }
+      
+      /* Stile per pallini di caricamento */
+      @keyframes pulse {
+        0% {
+          transform: scale(0.8);
+          opacity: 0.5;
+        }
+        50% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(0.8);
+          opacity: 0.5;
+        }
+      }
+      
+      .animate-pulse {
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+      
+      /* Effetto hover per i bottoni */
+      button, a {
+        transition: all 0.2s ease;
+      }
+      
+      button:hover, a:hover {
+        transform: translateY(-1px);
+      }
+      
+      button:active, a:active {
+        transform: translateY(1px);
       }
     `;
     document.head.appendChild(style);

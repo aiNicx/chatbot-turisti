@@ -1,0 +1,41 @@
+{
+  "trasporti": {
+    "keywords": ["traghetto", "ferry", "bus", "come arrivare", "raggiungere", "orari", "prenotazione"],
+    "risposta": {
+      "it": "Ecco i link utili per i trasporti:",
+      "en": "Here are useful transport links:"
+    },
+    "links": [
+      {
+        "url": "https://www.travelmar.it",
+        "pulsanti": {
+          "it": ["Orari Travelmar", "Prenota traghetto"],
+          "en": ["Travelmar schedules", "Book ferry"]
+        }
+      },
+      {
+        "url": "https://www.alicost.it",
+        "pulsanti": {
+          "it": ["Orari Alicost"],
+          "en": ["Alicost schedules"]
+        }
+      }
+    ]
+  },
+  "attivita": {
+    "keywords": ["attività", "cosa fare", "visitare", "activities", "to do", "esperienza", "experience"],
+    "risposta": {
+      "it": "Ecco alcune attività consigliate:",
+      "en": "Here are some recommended activities:"
+    },
+    "links": [
+      {
+        "url": "https://www.costieraamalfitana.com/attivita",
+        "pulsanti": {
+          "it": ["Scopri attività"],
+          "en": ["Explore activities"]
+        }
+      }
+    ]
+  }
+}

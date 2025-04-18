@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { sendMessageToLLM } from "./services/openRouterService";
+import { getLinksForMessage, updateLinkUsageStats } from "./services/linkService";
 import { readFileSync, readdirSync, existsSync } from "fs";
 import path from "path";
 
@@ -127,8 +128,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add user message to history
       chatHistoryToSend.push({ role: "user", content: message });
 
-      // Send to LLM and get response with context
-      const result = await sendMessageToLLM(chatHistoryToSend, sourceSites, conversationContext);
+      // Check for predefined links first
+      const predefinedLinks = getLinksForMessage(message, req.body.lang);
+      
+      let result;
+      if (predefinedLinks) {
+        result = {
+          content: predefinedLinks.text,
+          links: predefinedLinks.links
+        };
+      } else {
+        // Fallback to LLM if no predefined links match
+        result = await sendMessageToLLM(chatHistoryToSend, sourceSites, conversationContext);
+      }
 
       if (result) {
         // Add assistant message to history
@@ -136,6 +148,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Aggiorna il contesto con la risposta e i link
         updateConversationContext(result.content, result.links);
+        if (result.links) {
+          result.links.forEach(link => updateLinkUsageStats(link.url));
+        }
         
         console.log(`Topics discussed: ${Array.from(conversationContext.topicsDiscussed).join(', ')}`);
         console.log(`Links provided: ${Array.from(conversationContext.linksProvided.entries()).map(([k, v]) => `${k}(${v})`).join(', ')}`);

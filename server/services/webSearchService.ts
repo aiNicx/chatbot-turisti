@@ -155,8 +155,10 @@ function getGenericButtonText(language: string): string {
  * This is a simplified implementation - in a production app, 
  * we would do actual web searches to find relevant content
  */
+import { getLinksForMessage } from './linkService';
+
 export function extractLinksFromText(
-  text: string, 
+  text: string,
   sourceSites: string[],
   conversationContext?: {
     topicsDiscussed?: Set<string>;
@@ -165,6 +167,22 @@ export function extractLinksFromText(
     messageCount?: number;
   }
 ): LinkType[] {
+  // First try to get predefined links
+  const linkResult = getLinksForMessage(text);
+  if (linkResult) {
+    return linkResult.links.map((link: {text: string, url: string}) => ({
+      text: link.text,
+      url: link.url
+    }));
+  }
+  // First try to get predefined links
+  const predefinedLinks = getLinksForMessage(text);
+  if (predefinedLinks) {
+    return predefinedLinks.links.map(link => ({
+      text: link.text,
+      url: link.url
+    }));
+  }
   const links: LinkType[] = [];
   
   // Get language from text to provide correct button labels
@@ -251,7 +269,7 @@ export function extractLinksFromText(
   
   // Continua con la logica normale se non si parla di traghetti
   
-  // Check if any source site is mentioned in the text
+  // Fallback to original logic if no predefined links found
   const mentionedSites: {site: string, cleanSite: string, url: string}[] = [];
   
   for (const site of sourceSites) {

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { sendMessageToLLM } from "./services/openRouterService";
-import { readFileSync } from "fs";
+import { readFileSync, readdirSync, existsSync } from "fs";
 import path from "path";
 
 // Interfaccia per tenere traccia del contesto della conversazione
@@ -76,6 +76,19 @@ function updateConversationContext(message: string, links?: { text: string, url:
   }
 }
 
+// Funzione di utilità per rilevare la località richiesta nel messaggio utente
+function rilevaLocalitaAttivita(messaggio: string): string | null {
+  const localita = [
+    "amalfi", "atrani", "cetara", "maiori", "minori", "paestum", "pompei", "positano", "ravello", "sorrento", "vietri"
+    // aggiungi altre località se crei altri file
+  ];
+  const msg = messaggio.toLowerCase();
+  for (const loc of localita) {
+    if (msg.includes(loc)) return loc;
+  }
+  return null;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize the system message
   chatHistory = [
@@ -94,11 +107,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Aggiorna il contesto con il messaggio dell'utente
       updateConversationContext(message);
 
+      // Rileva se l'utente chiede attività per una località specifica
+      const localita = rilevaLocalitaAttivita(message);
+      let attivitaContent = "";
+      if (localita) {
+        const attivitaPath = path.join(import.meta.dirname, "attivita", `${localita}.txt`);
+        if (existsSync(attivitaPath)) {
+          attivitaContent = readFileSync(attivitaPath, "utf-8");
+        }
+      }
+
+      // Prepara la chat history da inviare al modello
+      const chatHistoryToSend = [...chatHistory];
+      if (attivitaContent) {
+        // Inserisci le attività come nuovo messaggio di sistema subito dopo le istruzioni
+        chatHistoryToSend.splice(1, 0, { role: "system", content: attivitaContent });
+      }
+
       // Add user message to history
-      chatHistory.push({ role: "user", content: message });
+      chatHistoryToSend.push({ role: "user", content: message });
 
       // Send to LLM and get response with context
-      const result = await sendMessageToLLM(chatHistory, sourceSites, conversationContext);
+      const result = await sendMessageToLLM(chatHistoryToSend, sourceSites, conversationContext);
 
       if (result) {
         // Add assistant message to history
